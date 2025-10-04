@@ -1,0 +1,13 @@
+<div class="card" style="display:flex;gap:16px;align-items:center">
+  {% if profile.avatar %}
+    <img src="{{ profile.avatar.url }}" alt="avatar" width="96" height="96" style="object-fit:cover;border-radius:50%">
+  {% else %}
+    <div style="width:96px;height:96px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center">?</div>
+  {% endif %}
+  <div>
+    <strong>{{ profile.user.first_name }} {{ profile.user.last_name }}</strong><br>
+    <small>{{ profile.user.email }}</small>
+    <p>{{ profile.bio|default:"..." }}</p>
+    <div>Публичный: {{ profile.is_public|yesno:"Да,Нет" }} • TZ: {{ profile.timezone|default:"—" }} • Стрик: {{ profile.streak_visibility|yesno:"Да,Нет" }}</div>
+  </div>
+</div>

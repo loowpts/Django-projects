@@ -1,0 +1,16 @@
+{% block content %}
+<h1>Профиль</h1>
+{% include "users/_profile_card.html" with profile=profile %}
+{% if request.user.is_authenticated and request.user.pk != profile.user.pk %}
+  <form method="post" action="{% url 'users:follow' pk=profile.user.pk %}" style="display:inline">
+    {% csrf_token %}<button>Подписаться</button>
+  </form>
+  <form method="post" action="{% url 'users:unfollow' pk=profile.user.pk %}" style="display:inline">
+    {% csrf_token %}<button>Отписаться</button>
+  </form>
+{% endif %}
+<p>
+  <a href="{% url 'users:profile_followers' pk=profile.user.pk %}">Подписчики</a> •
+  <a href="{% url 'users:profile_following' pk=profile.user.pk %}">Подписки</a>
+</p>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'todo/base.html' %}
+
+{% block title %}{% if form.instance.pk %}Редактировать задачу{% else %}Создать задачу{% endif %}{% endblock %}
+
+{% block content %}
+    <div class="bg-white p-6 rounded-lg shadow-md max-w-lg mx-auto">
+        <h1 class="text-2xl font-bold mb-4">{% if form.instance.pk %}Редактировать задачу{% else %}Создать задачу{% endif %}</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="{{ form.title.id_for_label }}" class="block text-gray-700 font-semibold">Название</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="text-red-600 text-sm">{{ form.title.errors }}</p>
+                {% endif %}
+            </div>
+            <div class="mb-4">
+                <label for="{{ form.description.id_for_label }}" class="block text-gray-700 font-semibold">Описание</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="text-red-600 text-sm">{{ form.description.errors }}</p>
+                {% endif %}
+            </div>
+            <div class="mb-4">
+                <label for="{{ form.is_completed.id_for_label }}" class="block text-gray-700 font-semibold">Завершено</label>
+                {{ form.is_completed }}
+                {% if form.is_completed.errors %}
+                    <p class="text-red-600 text-sm">{{ form.is_completed.errors }}</p>
+                {% endif %}
+            </div>
+            <div class="flex space-x-2">
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Сохранить</button>
+                <a href="{% url 'todo:task_list' %}" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Отмена</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
