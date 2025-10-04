@@ -1,0 +1,13 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Удалить комментарий{% endblock %}
+
+{% block content %}
+    <h2 class="text-2xl font-bold mb-4">Удалить комментарий</h2>
+    <p class="text-gray-600">Вы уверены, что хотите удалить комментарий от {{ object.display_author }} к посту "{{ object.post.title }}"?</p>
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Удалить</button>
+        <a href="{% url 'blog:post_detail' slug=object.post.slug %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Отмена</a>
+    </form>
+{% endblock %}

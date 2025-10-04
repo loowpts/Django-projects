@@ -1,0 +1,9 @@
+{% block content %}
+<h1>Мой профиль</h1>
+{% include "users/_profile_card.html" with profile=profile %}
+<p>
+  <a href="{% url 'users:profile_update' %}">Редактировать</a> •
+  <a href="#">Подписчики</a> •
+  <a href="#">Подписки</a>
+</p>
+{% endblock %}
