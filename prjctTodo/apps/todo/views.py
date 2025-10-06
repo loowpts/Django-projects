@@ -7,7 +7,7 @@ from django.contrib import messages
 from .models import Task
 from .forms import TaskForm
 from django.utils import timezone
-from django.views.generic import ListView, DetailView, DeleteView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, DeleteView, CreateView, UpdateView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views import View
@@ -28,7 +28,7 @@ class TaskListView(LoginRequiredMixin, ListView):
         priority = (self.request.GET.get('priority') or '')
 
         if q:
-            qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q))
+            qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q))
         if status:
             qs = qs.filter(status=status)
         if priority:
@@ -108,7 +108,7 @@ class TaskDeleteView(LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixi
     model = Task
     template_name = 'todo/task_confirm_delete.html'
     success_url = reverse_lazy('todo:task_list')
-    success_message = 'Обьект удалён.'
+    success_message = 'Задача удалена.'
 
     def test_func(self):
         obj = self.get_object()
@@ -137,7 +137,7 @@ class ToggleTaskDoneView(LoginRequiredMixin, View):
         return redirect('todo:task_list')
 
 
-class ChangeTaskStatusView(LoginRequiredMixin, View):
+class TaskChangeView(LoginRequiredMixin, View):
     def post(self, request, pk, new_status):
         task = get_object_or_404(Task, pk=pk, user=request.user)
         if new_status in dict(Task.Status.choices):
@@ -147,7 +147,7 @@ class ChangeTaskStatusView(LoginRequiredMixin, View):
         return redirect('todo:task_list')
 
 
-class ArchiveTaskView(LoginRequiredMixin, View):
+class TaskArchiveView(LoginRequiredMixin, View):
     def post(self, request, pk):
         task = get_object_or_404(Task, pk=pk, user=request.user)
         task.is_archived = not task.is_archived
@@ -156,3 +156,30 @@ class ArchiveTaskView(LoginRequiredMixin, View):
         messages.success(request, 'Задача архивирована' if task.is_archived else 'Задача восстановлена')
         return redirect('todo:task_list')
 
+
+class DashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'todo/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        tasks = Task.objects.filter(user=self.request.user)
+        ctx['total_tasks'] = tasks.count()
+        ctx['completed_tasks'] = tasks.filter(status=Task.Status.DONE).count()
+        ctx['pending_tasks'] = tasks.filter(status=Task.Status.TODO).count()
+        ctx['in_progress_tasks'] = tasks.filter(status=Task.Status.IN_PROGRESS).count()
+        ctx['recent_tasks'] = tasks.order_by('-created_at')[:5]
+        return ctx
+
+
+class DuplicateTaskView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        original = get_object_or_404(Task, pk=pk, user=request.user)
+        duplicate = Task.objects.create(
+            user=self.request.user,
+            title=original.title,
+            description=original.description,
+            priority=original.priority,
+            status=Task.Status.TODO,
+        )
+        messages.success(request, 'Задача дублирована')
+        return  redirect('todo:task_detail', pk=duplicate.pk)
