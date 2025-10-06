@@ -32,13 +32,10 @@ class Task(models.Model):
         ordering = ['-created_at']
 
     def save(self, *args, **kwargs):
-        # Keep is_done in sync with status
         if self.status == self.Status.DONE:
             self.is_done = True
         elif self.status in {self.Status.TODO, self.Status.IN_PROGRESS}:
             self.is_done = False
-
-        # Archived tasks must have ARCHIVED status
         if self.is_archived:
             self.status = self.Status.ARCHIVED
 
