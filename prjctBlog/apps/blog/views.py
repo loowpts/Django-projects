@@ -1,15 +1,17 @@
+from django.db.models.query import QuerySet
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, UpdateView, CreateView, FormView, DeleteView
-from .models import Category, Post, Comment
-from .forms import PostForm, CategoryForm, CommentForm
+from .models import Category, Post, Comment, Like, Subscription
+from .forms import PostForm, CategoryForm, CommentForm, LikeForm
 from django.db.models import Q, F
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views import View
 from django.urls import reverse, reverse_lazy
 from django.template.response import TemplateResponse
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.contrib import messages
 from taggit.models import Tag
+from django.utils import timezone
 from django.core.exceptions import PermissionDenied
 
 
@@ -237,3 +239,132 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_success_url(self) -> str:
         return reverse_lazy('blog:post_detail', kwargs={'slug': self.object.post.slug})
+
+
+class LikeCreateView(LoginRequiredMixin, CreateView):
+    def post(self, request, *args, **kwargs):
+        post_slug = kwargs.get('post_slug')
+        comment_id = kwargs.get('comment_id')
+        value = int(request.POST.get('value', 1)) # Для 1 лайка или 1 дизлайка
+
+        if post_slug:
+            obj = get_object_or_404(Post, slug=post_slug)
+            obj_type = 'post'
+        elif comment_id:
+            obj = get_object_or_404(Comment, id=comment_id)
+            obj_type = 'comment'
+        else:
+            return JsonResponse({'error': 'Object not specified'}, status=400)
+        
+        #Проверка на существующий лайк
+        like_kwargs = {'user': request.user}
+        if obj_type == 'post':
+            like_kwargs['post'] = obj
+        else:
+            like_kwargs['comment'] = obj
+
+        like, created = Like.objects.get_or_create(**like_kwargs, defaults={'value': value})
+        if not created:
+            if like.value == value:
+                like.delete() # Если тот же value, удаляем(toggle off)
+                new_count = self.get_like_count(obj, obj_type)
+                return JsonResponse({
+                    'success': True,
+                    'count': new_count,
+                    'action': 'removed'
+                })
+            else:
+                like.value = value # Меняем value
+                like.save()
+        new_count = self.get_like_count(obj, obj_type)
+        return JsonResponse({
+            'success': True,
+            'count': new_count,
+            'action': 'updated'
+        })
+    
+    def get_like_count(self, obj, obj_type):
+        if obj_type == 'post':
+            return Like.objects.filter(post=obj).aggregate(total=models.Sum('value'))['total'] or 0
+        else:
+            return Like.objects.filter(comment=obj).aggregate(total=models.Sum('value'))['total'] or 0
+
+
+class LikeDeleteView(LoginRequiredMixin, DeleteView):
+    def post(self, request, *args, **kwargs):
+        post_slug = kwargs.get('post_slug')
+        comment_id = kwargs.get('comment_id')
+
+        if post_slug:
+            obj = get_object_or_404(Post, slug=post_slug)
+            obj_type = 'post'
+            like = get_object_or_404(Like, user=request.user, post=obj)
+        elif comment_id:
+            obj = get_object_or_404(Comment, slug=comment_id)
+            obj_type = 'comment'
+            like = get_object_or_404(Like, user=request.user, comment=obj)
+        else:
+            return JsonResponse({
+                'error': 'Object not specified'
+            }, status=400)
+        
+        like.delete()
+        new_count = self.get_like_count(obj, obj_type)
+        return JsonResponse({
+            'success': True,
+            'count': new_count,
+            'action': 'deleted'
+        })
+    
+    def get_like_count(self, obj, obj_type):
+        if obj_type:
+            return Like.objects.filter(post=obj).aggregate(total=models.Sum('value'))['total'] or 0
+        else:
+            return Like.objects.filter(comment=obj).aggregate(total=models.Sum('value'))['total'] or 0
+
+
+class SubscriptionListView(LoginRequiredMixin, ListView):
+    model = Subscription
+    template_name = 'blog/subscription_list.html'
+    context_object_name = 'subscriptions'
+
+    def get_queryset(self):
+        return Subscription.objects.filter(user=self.request.user).select_related('category')
+    
+    
+class SubscriptionView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        category_slug = kwargs.get('category_slug')
+        category = get_object_or_404(Category, slug=category_slug)
+
+        subscription, created = Subscription.objects.get_or_create(
+            user=request.user,
+            category=category
+        )
+        if created:
+            messages.success(request, 'Вы успешно подписались на категорию.')
+            count = category.subscriptions.count() # Подсчёт подписчиков
+            return JsonResponse({
+                'success': True,
+                'action': 'subscribed',
+                'count': count
+            })
+        else:
+            return JsonResponse({'error': 'Вы уже подписаны'}, status=400)
+
+
+class SubscriptionDeleteView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        category_slug = kwargs.get('categoru_slug')
+        category = get_object_or_404(Category, slug=category_slug)
+        subscription = get_object_or_404(Subscription, user=request.user, category=category)
+        subscription.delete()
+        messages.success(request, 'Вы отписались от категории.')
+        count = category.subscriptions.count()
+        return JsonResponse({
+            'success': True,
+            'action': 'unsubscribed',
+            'count': count
+        })
+
+
