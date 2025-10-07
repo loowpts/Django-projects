@@ -367,4 +367,3 @@ class SubscriptionDeleteView(LoginRequiredMixin, View):
             'count': count
         })
 
-
