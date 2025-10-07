@@ -2,7 +2,7 @@ from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-from .models import Post, Comment, Category
+from .models import Post, Comment, Category, Like, Subscription
 
 
 class CategoryForm(forms.ModelForm):
@@ -106,3 +106,9 @@ class CommentForm(forms.ModelForm):
             if not data.get("author_name"):
                 raise ValidationError("Укажите имя или авторизуйтесь.")
         return data
+
+
+class LikeForm(forms.ModelForm):
+    class Meta:
+        model = Like
+        fields = ['value']

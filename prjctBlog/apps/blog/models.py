@@ -111,3 +111,36 @@ class Comment(models.Model):
     @property
     def is_reply(self):
         return self.parent is not None
+
+
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, blank=True, null=True)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, blank=True, null=True)
+    value = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'post', 'comment')
+
+
+class Subscription(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='subscriptions'
+        )
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, null=True, blank=True
+        )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'category')
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return f'{self.user} -> {self.category}'
+    
+    @staticmethod
+    def is_subscribed(user, category):
+        return Subscription.objects.filter(user=user, category=category).exists()
