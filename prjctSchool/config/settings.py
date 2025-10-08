@@ -63,7 +63,7 @@ CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE') == 'True'
 X_FRAME_OPTIONS = os.getenv('X_FRAME_OPTIONS', 'DENY')
 
 ROOT_URLCONF = 'config.urls'
-# AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'users.User'
 
 TEMPLATES = [
     {

@@ -1,11 +1,11 @@
-from django.forms import forms
+from django import forms
 from django.core.exceptions import ValidationError
 from .models import Course
 
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ['title', 'description', 'category', 'image']
+        fields = ['title', 'description', 'category', 'main_image']
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)

@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import FormView, DetailView
 from .models import UserProfile
-from .forms import RegisterForm, ProfileForm, LoginForm
+from .forms import RegisterForm, UserProfileForm, LoginForm
 from django.core.exceptions import PermissionDenied
 from .models import User
 
@@ -43,9 +43,9 @@ class MyProfileView(LoginRequiredMixin, DetailView):
 
 
 class UserProfileDetailView(DetailView):
+    model = UserProfile
     template_name = 'users/profile_detail.html'
     context_object_name = 'profile'
-    model = UserProfile
 
     def get_object(self, queryset=None):
         profile = get_object_or_404(
@@ -60,8 +60,8 @@ class UserProfileDetailView(DetailView):
 
 class ProfileUpdateView(LoginRequiredMixin, DetailView):
     model = UserProfile
+    form_class = UserProfileForm
     template_name = 'users/profile_update.html'
-    form_class = ProfileForm
     success_url = reverse_lazy('users:my_profile')
 
     def get_object(self, queryset=None):

@@ -1,8 +1,7 @@
 from django import forms
-from .models import UserProfile
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
-from .models import User,UserProfile
+from .models import User, UserProfile
 
 class UserProfileForm(forms.ModelForm):
     class Meta:
