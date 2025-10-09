@@ -58,6 +58,9 @@ class Lesson(models.Model):
         verbose_name = _('Урок')
         verbose_name_plural = _('Уроки')
         ordering = ['order']
+        constraints = [
+            models.UniqueConstraint(fields=['course', 'order'], name='unique_course_order'),
+        ]
 
     def __str__(self):
         return f'{self.title} - ({self.course.title}).'
