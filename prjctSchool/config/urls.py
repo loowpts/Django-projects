@@ -11,6 +11,7 @@ urlpatterns = [
     path('courses/', include('apps.courses.urls', namespace='courses')),
     path('enrollments/', include('apps.enrollments.urls', namespace='enrollments')),
     path('comments/', include('apps.comments.urls', namespace='comments')),
+    path('dashboard/', include('apps.dashboard.urls', namespace='dashboard')),
 ]
 
 if settings.DEBUG:
