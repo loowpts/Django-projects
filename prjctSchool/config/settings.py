@@ -32,26 +32,17 @@ INSTALLED_APPS = [
     'taggit',
     'rest_framework',
     'corsheaders',
-    # 'django_allauth',
-    # 'django_allauth.account',
-    # 'django_allauth.socialaccount',
-    # 'django_allauth.socialaccount.providers.google',
-    # 'django_allauth.socialaccount.providers.github',
-    # 'channels',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'django_htmx.middleware.HtmxMiddleware',
-    # 'allauth.account.middleware.AccountMiddleware',
 ]
 
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT') == 'True'
