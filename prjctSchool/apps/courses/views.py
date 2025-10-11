@@ -4,12 +4,13 @@ from .models import Course, Category, Lesson
 from .forms import CourseForm, CourseSearchForm, LessonForm
 from apps.enrollments.forms import EnrollmentForm
 from apps.enrollments.models import Enrollment
+from apps.comments.forms import CommentForm
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-
+from django.core.paginator import Paginator
 
 # class RequestFormMixin:
 #     def get_form_kwargs(self):
@@ -51,6 +52,7 @@ class CourseDetailView(DetailView):
     model = Course
     template_name = 'courses/course_detail.html'
     context_object_name = 'course'
+    paginate_by = 10
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -65,7 +67,20 @@ class CourseDetailView(DetailView):
 
         ctx['enrolled'] = enrolled
         ctx['lessons'] = course.lessons.all() if enrolled else []
+        ctx['comment_form'] = CommentForm()
 
+        ctx['lesson_comments'] = {}
+        if enrolled:
+            for lesson in ctx['lessons']:
+                comments = lesson.comments.all().order_by('created_at')
+                paginator = Paginator(comments, self.paginate_by)
+                page_number = self.request.GET.get(f'page_{lesson.pk}')
+                page_obj = paginator.get_page(page_number)
+                ctx['lesson_comments'][lesson.pk] = {
+                    'comments': page_obj,
+                    'paginator': paginator,
+                    'page_obj': page_obj
+                }
         return ctx
 
 

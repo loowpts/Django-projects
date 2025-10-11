@@ -30,7 +30,7 @@ class Course(models.Model):
     teacher = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='courses', verbose_name=_('Учитель')
         )
-    main_image = models.ImageField(_('Обложка'), upload_to='course/')
+    main_image = models.ImageField(_('Обложка'), upload_to='media/courses/')
     created_at = models.DateTimeField(_('Дата регистрации'), auto_now_add=True)
 
     class Meta:
