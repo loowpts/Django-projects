@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'apps.users.apps.UsersConfig',
-    # 'apps.events.apps.EventsConfig',
+    'apps.events.apps.EventsConfig',
     # 'apps.tickets.apps.TicketsConfig',
     # 'apps.notifications.apps.NotificationsConfig',
     # 'apps.chat.apps.ChatConfig',
