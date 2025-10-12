@@ -92,7 +92,7 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        related_name='replies'
+        related_name='replies',
         verbose_name=_('Родительский комментарий')
     )
     body = models.TextField()
