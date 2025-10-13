@@ -1,10 +1,16 @@
 from django.shortcuts import redirect, get_object_or_404
-from django.views.generic import ListView, DetailView, UpdateView, CreateView, DeleteView
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.http import require_POST
+from django.utils.decorators import method_decorator
+from django.views.generic import (
+    ListView, DetailView,
+    UpdateView, CreateView,
+    DeleteView, View
+)
 
 from apps.users.models import UserProfile
 from .models import Category, Event, Review, Tag
@@ -21,13 +27,13 @@ class EventListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         qs = Event.objects.select_related('author', 'category').prefetch_related('tags')
 
-        if not self.request.user.is_staff():
+        if not self.request.user.is_staff:
             qs = qs.filter(
                 Q(status=Event.Status.PUBLISHED) | Q(status=Event.Status.DRAFT, author=self.request.user)
             )
 
         query = (self.request.GET.get('q') or '').strip()
-        category = (self.request.GET.get('category') or '').strip()
+        category_slug = (self.request.GET.get('category') or '').strip()
         status = (self.request.GET.get('status') or '').strip()
 
         if query:
@@ -58,7 +64,7 @@ class EventDetailView(LoginRequiredMixin, DetailView):
     model = Event
     template_name = 'events/event_detail.html'
     context_object_name = 'event'
-    slug_fields = 'slug'
+    slug_field = 'slug'
     slug_url_kwarg = 'slug'
 
     def get_object(self, queryset=None):
@@ -84,12 +90,14 @@ class EventDetailView(LoginRequiredMixin, DetailView):
             review = form.save(commit=False)
             review.event = self.object
             review.user = self.request.user
+            review.approved = False
             review.save()
             messages.success(request, 'Ваш отзыв отправлен на модерацию.')
             return redirect(self.get_success_url())
         else:
             messages.error(request, 'Ошибка в форме отзыва.')
             ctx = self.get_context_data()
+            ctx['review_form'] = form
             return self.render_to_response(ctx)
 
     def get_success_url(self):
@@ -150,14 +158,15 @@ class EventDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.request.user.is_staff or event.author == self.request.user
 
     def handle_no_permission(self):
-        messages.error(self.request, 'У вас нету доступа для удаления.')
+        messages.error(self.request, 'У вас нет доступа для удаления.')
+        return super().handle_no_permission()
 
     def get_success_url(self):
         messages.success(self.request, 'Событие удалено.')
         return self.success_url
 
 
-class EventArchiveView(LoginRequiredMixin, UserPassesTestMixin, ArchiveView):
+class EventArchiveView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Event
     template_name = 'events/event_archive.html'
     context_object_name = 'events'
@@ -176,7 +185,7 @@ class EventArchiveView(LoginRequiredMixin, UserPassesTestMixin, ArchiveView):
         if year and year.isdigit():
             qs = qs.filter(start_datetime__year=int(year))
         if month and month.isdigit():
-            qs = qs.filter(start_datetime_month=int(month))
+            qs = qs.filter(start_datetime__month=int(month))
 
         return qs.order_by('-start_datetime')
 
@@ -212,7 +221,7 @@ class ReviewCreateView(LoginRequiredMixin, CreateView):
         try:
             review = form.save()
         except IntegrityError:
-            form.add_error(None, 'Не удалось добавить отзыв: возможен дубликат. Если вы уже оставляли отзыв, его можно отредактировать.')
+            form.add_error(None, 'Вы уже оставили отзыв для этого события.')
             return self.form_invalid(form)
 
         messages.success(self.request, 'Спасибо! Ваш отзыв добавлен и ожидает модерации.')
@@ -231,12 +240,11 @@ class ReviewUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['request'] = self.request
         return kwargs
 
     def test_func(self):
         review = super().get_object()
-        return self.request.user.is_staff or review.author == self.request.user
+        return self.request.user.is_staff or review.user == self.request.user
 
     def handle_no_permission(self):
         messages.error(self.request, 'Вы не можете редактировать этот отзыв.')
@@ -249,9 +257,9 @@ class ReviewUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def get_success_url(self):
         return self.object.event.get_absolute_url()
 
-class ReviwDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class ReviewDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Review
-    template_name = 'events/reviw_confirm_delete.html'
+    template_name = 'events/review_confirm_delete.html'
 
     def test_func(self):
         review = super().get_object()
@@ -265,18 +273,17 @@ class ReviwDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.object.event.get_absolute_url()
 
 
-class ReviwListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+class ReviewListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Review
-    template_name = 'events/reviw_list.html'
+    template_name = 'events/review_list.html'
     context_object_name = 'reviews'
     paginate_by = 20
 
     def test_func(self):
-        review = super().get_object()
         return self.request.user.is_staff
 
     def get_queryset(self):
-        qs = Review.objects.select_related('author', 'category').prefetch_related('tags')
+        qs = Review.objects.select_related('user', 'event')
         query = self.request.GET.get('query', '').strip()
 
         if query:
@@ -286,7 +293,53 @@ class ReviwListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 models.Q(user__first_name__icontains=query) |
                 models.Q(user__last_name__icontains=query)
             )
-        approved = (self.request.GET.get('approved'))
+        approved = self.request.GET.get('approved', '')
         if approved in ('0', '1'):
-            qs = qs.filter(approved(approved == '1'))
-        return qs
+            qs = qs.filter(approved=(approved == '1'))
+        return qs.order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['query'] = self.request.GET.get('query', '').strip()
+        ctx['approved'] = self.request.GET.get('approved', '')
+        return ctx
+
+class ApproveReviewView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'У вас нету прав для этой операции.')
+        return super().handle_no_permission()
+
+    @method_decorator(require_POST)
+    def post(self, request, pk, *args, **kwargs):
+        review = get_object_or_404(Review, pk=pk)
+        if review.approved:
+            messages.success(request, 'Отзыв уже одобрен.')
+        else:
+            review.approved = True
+            review.save(update_fields=['approved'])
+            messages.success(request, 'Отзыв успешно одобрен.')
+        return redirect(request.META.get('HTTP_REFERER') or reverse_lazy('events:review_list'))
+
+
+class RejectReviewView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'У вас нету прав для операции.')
+        return super().handle_no_permission()
+
+    @method_decorator(require_POST)
+    def post(self, request, pk, *args, **kwargs):
+        review = get_object_or_404(Review, pk=pk)
+
+        if not review.approved:
+            messages.info(request, 'Отзыв уже отмечен как не одобренный.')
+        else:
+            review.approved = False
+            review.save(update_fields=['approved'])
+            messages.success(request, 'Отзыв помечен как не одобренный.')
+        return redirect(request.META.get('HTTP_REFERER') or reverse_lazy('events:review_list'))
