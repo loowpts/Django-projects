@@ -57,7 +57,12 @@ class EventListView(LoginRequiredMixin, ListView):
         ctx['status'] = self.request.GET.get('status', '')
         ctx['categories'] = Category.objects.all()
         ctx['statuses'] = Event.Status.choices
-
+        category_slug = self.request.GET.get('category', '').strip()
+        if category_slug:
+            category = Category.objects.filter(slug=category_slug).first()
+            ctx['category_name'] = category.name if category else 'Без категории'
+        else:
+            ctx['category_name'] = ''
         return ctx
 
 class EventDetailView(LoginRequiredMixin, DetailView):

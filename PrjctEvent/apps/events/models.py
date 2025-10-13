@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.utils.text import slugify
 from django.urls import reverse
+from django.db.models import Avg
 
 
 class Category(models.Model):
@@ -94,8 +95,11 @@ class Event(models.Model):
         return reverse('events:event_detail', kwargs={'slug': self.slug})
 
     def average_rating(self):
-        agg = self.reviews.aggregate(avg=Avg('rating'))
-        return agg['avg']
+        try:
+            agg = self.reviews.filter(approved=True).aggregate(avg=Avg('rating'))
+            return round(agg['avg'], 1) if agg['avg'] else None
+        except Exception:
+            return None
 
     def save(self, *args, **kwargs):
         if not self.slug:
