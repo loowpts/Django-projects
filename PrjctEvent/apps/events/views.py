@@ -17,7 +17,6 @@ from .models import Category, Event, Review, Tag
 from .forms import EventForm, ReviewForm, SearchForm, EventArchiveForm
 
 
-
 class EventListView(LoginRequiredMixin, ListView):
     model = Event
     template_name = 'events/event_list.html'
@@ -64,6 +63,7 @@ class EventListView(LoginRequiredMixin, ListView):
         else:
             ctx['category_name'] = ''
         return ctx
+
 
 class EventDetailView(LoginRequiredMixin, DetailView):
     model = Event
