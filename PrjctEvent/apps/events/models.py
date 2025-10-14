@@ -74,7 +74,7 @@ class Event(models.Model):
         verbose_name=_('Теги'),
         blank=True
     )
-    image = models.ImageField(_('Изображение'), upload_to='events/images/', null=True, blank=True)
+    image = models.ImageField(_('Изображение'), upload_to='media/events/images/', null=True, blank=True)
     start_datetime = models.DateTimeField(_('Дата и время начала'), default=timezone.now)
     end_datetime = models.DateTimeField(_('Дата и время окончания'), null=True, blank=True)
     location = models.CharField(_('Местоположение'), max_length=255, null=True, blank=True)
@@ -102,9 +102,18 @@ class Event(models.Model):
             return None
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.title)
-        return super().save(*args, **kwargs)
+        if not self.slug or self.slug == '':
+            base_slug = slugify(self.title)
+            if not base_slug:
+                base_slug = 'event'
+
+            self.slug = base_slug
+
+            counter = 1
+            while Event.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
 
 
 class Review(models.Model):

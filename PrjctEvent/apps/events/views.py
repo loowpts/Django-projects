@@ -1,8 +1,9 @@
 from django.shortcuts import redirect, get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, F
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
+from django.db import IntegrityError
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
@@ -75,9 +76,10 @@ class EventDetailView(LoginRequiredMixin, DetailView):
     def get_object(self, queryset=None):
         event = super().get_object(queryset)
         if event.status == Event.Status.DRAFT and event.author != self.request.user and not self.request.user.is_staff:
-            self.raise_exception = True
-            self.handle_no_permission()
-        Event.objects.filter(pk=event.pk).update(views_count=event.views_count + 1)
+            raise PermissionDenied()
+
+        Event.objects.filter(pk=event.pk).update(views_count=F('views_count') + 1)
+        event.refresh_from_db()
         return event
 
     def get_context_data(self, **kwargs):
@@ -90,7 +92,7 @@ class EventDetailView(LoginRequiredMixin, DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        form = ReviewForm(request.POST)
+        form = ReviewForm(request.POST, request=request)
         if form.is_valid():
             review = form.save(commit=False)
             review.event = self.object
@@ -113,11 +115,7 @@ class EventCreateView(LoginRequiredMixin, CreateView):
     model = Event
     form_class = EventForm
     template_name = 'events/event_form.html'
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['request'] = self.request
-        return kwargs
+    success_url = reverse_lazy('events:event_list')
 
     def form_valid(self, form):
         form.instance.author = self.request.user
@@ -127,7 +125,6 @@ class EventCreateView(LoginRequiredMixin, CreateView):
             self.request.user.userprofile.save()
         messages.success(self.request, 'Событие успешно создано.')
         return super().form_valid(form)
-
 
 class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Event
@@ -145,7 +142,7 @@ class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return self.request.user.is_staff or event.author == self.request.user
 
     def handle_no_permission(self):
-        messages.error(self.request, 'У вас нету доступа для редактирования.')
+        messages.error(self.request, 'У вас нет доступа для редактирования.')
         return super().handle_no_permission()
 
     def form_valid(self, form):
@@ -166,8 +163,11 @@ class EventDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         messages.error(self.request, 'У вас нет доступа для удаления.')
         return super().handle_no_permission()
 
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Событие успешно удалено.')
+        return super().delete(request, *args, **kwargs)
+
     def get_success_url(self):
-        messages.success(self.request, 'Событие удалено.')
         return self.success_url
 
 
@@ -176,6 +176,9 @@ class EventArchiveView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     template_name = 'events/event_archive.html'
     context_object_name = 'events'
     paginate_by = 10
+
+    def test_func(self):
+        return self.request.user.is_staff
 
     def get_queryset(self):
         qs = Event.objects.select_related('author', 'category').prefetch_related('tags')
@@ -223,8 +226,12 @@ class ReviewCreateView(LoginRequiredMixin, CreateView):
         return kwargs
 
     def form_valid(self, form):
+        review = form.save(commit=False)
+        review.user = self.request.user
+        review.event = self.event
+        review.approved = False
         try:
-            review = form.save()
+            review.save()
         except IntegrityError:
             form.add_error(None, 'Вы уже оставили отзыв для этого события.')
             return self.form_invalid(form)
@@ -268,10 +275,10 @@ class ReviewDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self):
         review = super().get_object()
-        return self.request.user.is_staff or event.author == self.request.user
+        return self.request.user.is_staff or review.user == self.request.user
 
     def handle_no_permission(self):
-        messages.success(self.request, 'У вас нету прав на удаления.')
+        messages.success(self.request, 'У вас нет прав на удаления.')
         return super().handle_no_permission()
 
     def get_success_url(self):
@@ -293,10 +300,10 @@ class ReviewListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
         if query:
             qs = qs.filter(
-                models.Q(event__title__icontains=query) |
-                models.Q(user__email__icontains=query) |
-                models.Q(user__first_name__icontains=query) |
-                models.Q(user__last_name__icontains=query)
+                Q(event__title__icontains=query) |
+                Q(user__email__icontains=query) |
+                Q(user__first_name__icontains=query) |
+                Q(user__last_name__icontains=query)
             )
         approved = self.request.GET.get('approved', '')
         if approved in ('0', '1'):
@@ -314,14 +321,14 @@ class ApproveReviewView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user.is_staff
 
     def handle_no_permission(self):
-        messages.error(self.request, 'У вас нету прав для этой операции.')
+        messages.error(self.request, 'У вас нет прав для этой операции.')
         return super().handle_no_permission()
 
     @method_decorator(require_POST)
     def post(self, request, pk, *args, **kwargs):
         review = get_object_or_404(Review, pk=pk)
         if review.approved:
-            messages.success(request, 'Отзыв уже одобрен.')
+            messages.info(request, 'Отзыв уже одобрен.')
         else:
             review.approved = True
             review.save(update_fields=['approved'])
@@ -334,7 +341,7 @@ class RejectReviewView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user.is_staff
 
     def handle_no_permission(self):
-        messages.error(self.request, 'У вас нету прав для операции.')
+        messages.error(self.request, 'У вас нет прав для операции.')
         return super().handle_no_permission()
 
     @method_decorator(require_POST)
