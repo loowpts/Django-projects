@@ -6,9 +6,10 @@ from django.contrib.auth.views import LoginView
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import FormView, DetailView
+from django.core.exceptions import PermissionDenied
+
 from .models import UserProfile
 from .forms import RegisterForm, ProfileForm, LoginForm
-from django.core.exceptions import PermissionDenied
 from .models import User
 
 
