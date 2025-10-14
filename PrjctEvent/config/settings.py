@@ -21,7 +21,7 @@ INSTALLED_APPS = [
 
     'apps.users.apps.UsersConfig',
     'apps.events.apps.EventsConfig',
-    # 'apps.tickets.apps.TicketsConfig',
+    'apps.tickets.apps.TicketsConfig',
     # 'apps.notifications.apps.NotificationsConfig',
     # 'apps.chat.apps.ChatConfig',
     # 'apps.analytics.apps.AnalyticsConfig',
