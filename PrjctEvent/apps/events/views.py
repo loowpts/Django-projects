@@ -155,7 +155,7 @@ class EventUpdate(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 event.slug = slugify(event.title)
             event.save()
             if request.headers.get('HX-Request'):
-                return TemplateResponse(request, 'events/partials/success_partial.html', {'event': event})
+                return TemplateResponse(request, 'events/partials/event_success_partial.html', {'event': event})
             return redirect('events:event_detail', slug=event.slug)
 
         ctx = {'form': form}
@@ -180,14 +180,14 @@ class EventDelete(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         ctx = self.get_context_data(**kwargs)
         if request.headers.get('HX-Request'):
-            return TemplateResponse(request, 'events/partials/delete_confirm.html', ctx)
+            return TemplateResponse(request, 'events/partials/event_delete_confirm.html', ctx)
         return TemplateResponse(request, self.template_name, ctx)
 
     def post(self, request, *args, **kwargs):
         event = self.get_object()
         event.delete()
         if request.headers.get('HX-Request'):
-            return TemplateResponse(request, 'events/partials/deleted.html', {'message': 'Deleted'})
+            return TemplateResponse(request, 'events/partials/event_deleted.html', {'message': 'Deleted'})
         return redirect('events:event_list')
 
 
