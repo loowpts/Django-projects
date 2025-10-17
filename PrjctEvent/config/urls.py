@@ -8,7 +8,7 @@ urlpatterns = [
     path('users/', include('apps.users.urls', namespace='users')),
     path('events/', include('apps.events.urls', namespace='events')),
     # path('tickets/', include('apps.tickets.urls', namespace='tickets')),
-    # path('notifications/', include('apps.notifications.urls', namespace='notifications')),
+    path('notifications/', include('apps.notifications.urls', namespace='notifications')),
     # path('chat/', include('apps.chat.urls', namespace='chat')),
     # path('analytics/', include('apps.analytics.urls', namespace='analytics')),
 ]

@@ -22,7 +22,7 @@ INSTALLED_APPS = [
     'apps.users.apps.UsersConfig',
     'apps.events.apps.EventsConfig',
     'apps.tickets.apps.TicketsConfig',
-    # 'apps.notifications.apps.NotificationsConfig',
+    'apps.notifications.apps.NotificationsConfig',
     # 'apps.chat.apps.ChatConfig',
     # 'apps.analytics.apps.AnalyticsConfig',
 
@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     # 'django_allauth.socialaccount.providers.github',
     # 'channels',
 ]
+
+INSTALLED_APPS += ['django_celery_beat']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -145,12 +147,13 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # }
 
 # Celery
-# CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
-# CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
-# CELERY_ACCEPT_CONTENT = ['json']
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
-# CELERY_TIMEZONE = os.getenv('CELERY_TIMEZONE', 'UTC')
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = [os.getenv('CELERY_ACCEPT_CONTENT', 'json')]
+CELERY_TASK_SERIALIZER = os.getenv('CELERY_TASK_SERIALIZER', 'json')
+CELERY_RESULT_SERIALIZER = os.getenv('CELERY_RESULT_SERIALIZER', 'json')
+CELERY_TIMEZONE = os.getenv('CELERY_TIMEZONE', 'UTC')
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # django-allauth
 # AUTHENTICATION_BACKENDS = [
@@ -215,12 +218,12 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # }
 
 # Email
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = os.getenv('EMAIL_HOST')
-# EMAIL_PORT = os.getenv('EMAIL_PORT')
-# EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'
-# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-# DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'test@example.com')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
