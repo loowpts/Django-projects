@@ -110,7 +110,7 @@ class Registration(models.Model):
     total_amount = models.DecimalField(max_digits=20, decimal_places=2, editable=False, verbose_name=_('Итого'))
 
     class Meta:
-        unique_together = ('user', 'ticket')
+        unique_together = ('user', 'event')
         verbose_name = _('Регистрация')
         verbose_name_plural = _('Регистрации')
         indexes = [models.Index(fields=['user', 'event', 'status'])]
@@ -119,21 +119,21 @@ class Registration(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.user} - {self.event.user} ({self.status})'
+        return f'{self.user} - {self.event.title} ({self.status})'
 
     def clean(self):
-        if self.ticket and self.ticket.price > 0 and not self.ticket.payment_id:
-            raise ValidationError('Для платного билета нужен payment_id')
+        if self.ticket and self.ticket.price > 0 and not self.payment_id and self.status == self.Status.CONFIRMED:
+            raise ValidationError(_('Для платного билета нужен payment_id'))
         if self.quantity < 1:
-            raise ValidationError('Количество должно быть больше нуля.')
+            raise ValidationError(_('Количество должно быть больше нуля.'))
         if self.ticket and not self.ticket.is_available(self.quantity):
-            raise ValidationError('Недостаточно билетов.')
+            raise ValidationError(_('Недостаточно билетов.'))
 
     @transaction.atomic
     def confirm(self, payment_id=None):
-        if self.status != Status.PENDING:
-            raise ValidationError('Уже обработано.')
-        self.status = Status.CONFIRMED
+        if self.status != self.Status.PENDING:
+            raise ValidationError(_('Уже обработано.'))
+        self.status = self.Status.CONFIRMED
         if payment_id:
             self.payment_id = payment_id
         if self.ticket:
@@ -143,14 +143,13 @@ class Registration(models.Model):
 
     @transaction.atomic
     def cancel(self, payment_id=None):
-        if self.status == Status.CONFIRMED and self.ticket:
+        if self.status == self.Status.CONFIRMED and self.ticket:
             self.ticket.sold_count = models.F('sold_count') - self.quantity
+            self.ticket.quantity_available = models.F('quantity_available') + self.quantity
             self.ticket.save()
-        self.status = Status.CANCELLED
+        self.status = self.Status.CANCELLED
         self.save()
 
     def save(self, *args, **kwargs):
         self.clean()
-        if not self.total_amount and self.ticket:
-            self.total_amount = self.ticket.price * self.quantity
         super().save(*args, **kwargs)

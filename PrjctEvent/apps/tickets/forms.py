@@ -4,6 +4,10 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from .models import Ticket, Registration
 from apps.events.models import Event
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class TicketForm(forms.ModelForm):
@@ -67,7 +71,7 @@ class TicketForm(forms.ModelForm):
         return ticket
 
 
-class RegistrationForm(forms.ModelForm):
+class RegistrationForm(forms.Form):
     ticket_type = forms.ChoiceField(
         choices=[],
         label=_('Тип билета'),
@@ -79,65 +83,70 @@ class RegistrationForm(forms.ModelForm):
         initial=1,
         label=_('Количество'),
     )
-    event = forms.ModelChoiceField(
-        queryset=Event.objects.all(),
-        widget=forms.HiddenInput(),
-        label=_('Событие')
-    )
     
     def __init__(self, *args, user=None, event=None, **kwargs):
         self.user = user or kwargs.pop('user', None)
         self.event = event or kwargs.pop('event', None)
         super().__init__(*args, **kwargs)
-        
+
         if self.event:
             ticket_qs = Ticket.objects.filter(event=self.event)
+            logger.info(f"Tickets for event {self.event.slug}: {ticket_qs.count()}")
             choices = [(ticket.type, f'{ticket.get_type_display()} - {ticket.price} руб.') for ticket in ticket_qs]
             if not choices:
                 choices = [('', _('Нет доступных билетов.'))]
             self.fields['ticket_type'].choices = choices
-            
-            # Если событие бесплатное — скрыть/отключить цену
-            if self.event.is_free():
+
+            if self.event.is_free:
+                self.fields['ticket_type'].choices = [('', 'Стандартный (бесплатно)')]
                 self.fields['ticket_type'].widget = forms.HiddenInput()
-                self.fields['ticket_type'].initial = Ticket.TicketType.STANDARD
+                self.fields['ticket_type'].initial = ''
                 self.fields['ticket_type'].required = False
 
     def clean(self):
-        """Валидация: Если бесплатное — без цены; availability; дубли."""
         cleaned_data = super().clean()
-        event = cleaned_data.get('event')
         ticket_type = cleaned_data.get('ticket_type')
         quantity = cleaned_data.get('quantity')
+        logger.info(f"Cleaning form: ticket_type={ticket_type}, quantity={quantity}")
 
-        if not event:
+        if not self.event:
             raise ValidationError(_('Событие обязательно.'))
 
-        # Проверка существующих регистраций (предотвратить дубли)
-        if self.user:
-            if Registration.objects.filter(user=self.user, event=event).exists():
-                raise ValidationError(_('Вы уже зарегистрированы на это событие.'))
+        if self.user and Registration.objects.filter(user=self.user, event=self.event).exists():
+            raise ValidationError(_('Вы уже зарегистрированы на это событие.'))
 
-        # Для бесплатного события
-        if event.is_free():
-            if ticket_type:
-                raise ValidationError(_('Для бесплатного события тип билета не нужен.'))
-            cleaned_data['total_amount'] = 0  # Для view
+        if self.event.is_free:
+            cleaned_data['total_amount'] = 0
+            cleaned_data['ticket'] = None
             return cleaned_data
 
-        # Для платного: проверка ticket_type и availability
         if not ticket_type:
             raise ValidationError(_('Выберите тип билета.'))
 
-        ticket = Ticket.objects.get(event=event, type=ticket_type)
+        try:
+            ticket = Ticket.objects.get(event=self.event, type=ticket_type)
+        except Ticket.DoesNotExist:
+            raise ValidationError(_('Выбранный тип билета недоступен.'))
+
         if not ticket.is_available(quantity):
             raise ValidationError(_('Недостаточно билетов для выбранного типа.'))
 
-        # Расчёт суммы (для Stripe в view)
         cleaned_data['total_amount'] = ticket.price * quantity
-        cleaned_data['ticket'] = ticket  # Для сохранения в view
-
+        cleaned_data['ticket'] = ticket
         return cleaned_data
+
+    def save(self, commit=True):
+        logger.info("Saving registration")
+        registration = Registration.objects.create(
+            user=self.user,
+            event=self.event,
+            ticket=self.cleaned_data['ticket'],
+            quantity=self.cleaned_data['quantity'],
+            total_amount=self.cleaned_data['total_amount'],
+            status=Registration.Status.PENDING if self.cleaned_data['ticket'] else Registration.Status.CONFIRMED
+        )
+        logger.info(f"Registration saved: ID={registration.id}")
+        return registration
                  
             
     

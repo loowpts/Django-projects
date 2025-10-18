@@ -79,6 +79,7 @@ class Event(models.Model):
     end_datetime = models.DateTimeField(_('Дата и время окончания'), null=True, blank=True)
     location = models.CharField(_('Местоположение'), max_length=255, null=True, blank=True)
     status = models.CharField(_('Статус'), max_length=20, choices=Status.choices, default=Status.DRAFT)
+    is_free = models.BooleanField(default=False, verbose_name=_('Бесплатное'))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     views_count = models.PositiveIntegerField(_('Просмотры'), default=0)
