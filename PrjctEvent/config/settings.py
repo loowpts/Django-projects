@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 
     'apps.users.apps.UsersConfig',
     'apps.events.apps.EventsConfig',
@@ -30,11 +31,11 @@ INSTALLED_APPS = [
     'django_htmx',
     'taggit',
     # 'rest_framework',
-    # 'django_allauth',
-    # 'django_allauth.account',
-    # 'django_allauth.socialaccount',
-    # 'django_allauth.socialaccount.providers.google',
-    # 'django_allauth.socialaccount.providers.github',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
     # 'channels',
 ]
 
@@ -49,8 +50,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'django_htmx.middleware.HtmxMiddleware',
-    # 'allauth.account.middleware.AccountMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT') == 'True'
@@ -157,16 +158,29 @@ CELERY_TIMEZONE = os.getenv('CELERY_TIMEZONE', 'UTC')
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # django-allauth
-# AUTHENTICATION_BACKENDS = [
-#     'django.contrib.auth.backends.ModelBackend',
-#     'allauth.account.auth_backends.AuthenticationBackend',
-# ]
-# SITE_ID = 1
-# ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-# ACCOUNT_AUTHENTICATION_METHOD = 'email'
-# ACCOUNT_EMAIL_REQUIRED = True
-# LOGIN_REDIRECT_URL = '/'
-# LOGOUT_REDIRECT_URL = '/'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SITE_ID = 1
+# Allauth account settings
+ACCOUNT_EMAIL_REQUIRED = True  # Требовать email
+ACCOUNT_USERNAME_REQUIRED = False  # Не использовать username
+ACCOUNT_AUTHENTICATION_METHOD = 'email'  # Авторизация по email
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Обязательная верификация email (можно 'optional' для тестов)
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True  # Дважды вводить пароль при регистрации
+ACCOUNT_ADAPTER = 'apps.users.adapters.CustomAccountAdapter'  # Кастомный адаптер (создадим ниже)
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Срок действия ссылки подтверждения
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None # Отключаем username для кастомной User-модели
+
+# Allauth social account settings
+SOCIALACCOUNT_ADAPTER = 'apps.users.adapters.CustomSocialAccountAdapter'  # Кастомный адаптер для соцсетей
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Автоматическая регистрация при входе через соцсети
+SOCIALACCOUNT_LOGIN_ON_GET = True  # Автологин без доп. подтверждений
+
+LOGIN_REDIRECT_URL = '/users/me/'
+LOGOUT_REDIRECT_URL = '/'
 
 # Django REST Framework
 # REST_FRAMEWORK = {
@@ -210,15 +224,44 @@ LOGGING = {
 
 # Email
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False') == 'True'
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'test@example.com')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'test@example.com')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 # STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+
+# Настройки провайдеров Google и GitHub
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+            'secret': os.getenv('GOOGLE_CLIENT_SECRET', ''),
+            'key': ''
+        },
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    },
+    'github': {
+        'APP': {
+            'client_id': os.getenv('GITHUB_CLIENT_ID', ''),
+            'secret': os.getenv('GITHUB_CLIENT_SECRET', ''),
+        },
+        'SCOPE': [
+            'user',
+            'repo',
+            'read:org',
+        ],
+    },
+}

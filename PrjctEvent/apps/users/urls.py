@@ -1,7 +1,5 @@
 from django.urls import path, re_path
 from django.contrib.auth import views as auth_views
-from django.views.generic import TemplateView
-from django.urls import reverse_lazy
 from .views import (
     CustomLoginView, MyProfileView, UserProfileDetailView,
     RegisterView, ProfileUpdateView,
@@ -11,19 +9,10 @@ app_name = 'users'
 
 urlpatterns = [
     # auth
-    path('login/', CustomLoginView.as_view(template_name='users/login.html'), name='login'),
-    path(
-        'logout/',
-        auth_views.LogoutView.as_view(),
-        name='logout'
-    ),
+    path('login/', CustomLoginView.as_view(), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('register/', RegisterView.as_view(), name='register'),
-    # path('register/done/', RegisterDoneView.as_view(), name='register_done'),
-
-    # email activation
-    # path('activate/<uidb64>/<token>/', ActivateEmailView.as_view(), name='activate'),
-    # path('activate/invalid/', ActivationInvalidView.as_view(), name='activation_invalid'),
-    # path('resend-activation/', ResendActivationView.as_view(), name='resend_activation'),
+    path('signup/', RegisterView.as_view(), name='signup'),  # Для совместимости с allauth
 
     # password reset
     path(
