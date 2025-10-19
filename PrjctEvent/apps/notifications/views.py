@@ -1,11 +1,15 @@
 from django.template.response import TemplateResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 from django.views.generic import ListView
 from django.views import View
 from django.contrib import messages
+from django_htmx.http import HttpResponseClientRedirect as htmx_redirect
+from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import NotificationFilterForm
 from .models import Notification
+
 
 class NotificationList(LoginRequiredMixin, ListView):
     template_name = 'notifications/notification_list.html'
@@ -44,18 +48,19 @@ class NotificationMarkReadView(LoginRequiredMixin, View):
         notification = get_object_or_404(Notification, pk=pk, user=request.user)
         notification.mark_as_read()
         
-        message.success(request, 'Уведомление помечено как прочитанное.')
+        messages.success(request, 'Уведомление помечено как прочитанное.')
         if request.headers.get('HX-Request'):
             response = TemplateResponse(request, 'notifications/partials/notification_row.html')
             response['HX-Redirect'] = reverse('notifications:notification_list')
             return response
         return htmx_redirect(request, reverse('notifications:notification_list'))
     
+    
 class NotificationMarkAllReadView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
 
-        message.success(request, 'Все уведомления помечены как прочитанные.')
+        messages.success(request, 'Все уведомления помечены как прочитанные.')
         if request.headers.get('HX-Request'):
             response = HttpResponse(status=204)
             response['HX-Redirect'] = reverse('notifications:notification_list')

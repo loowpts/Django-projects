@@ -1,17 +1,16 @@
-from typing import Any
 from django.views.generic import TemplateView, DetailView, ListView
 from django.views import View
 from django.template.response import TemplateResponse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect, get_object_or_404
-from django.db.models import Q, Avg
+from django.db.models import Q
 from django.utils.text import slugify
 from django.db import transaction
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone
 
-from .forms import EventForm, ReviewForm, EventArchiveForm, EventSearchForm
+from .forms import EventForm, ReviewForm, EventSearchForm
 from .models import Event, Review, Category
 
 

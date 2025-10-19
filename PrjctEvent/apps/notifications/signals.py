@@ -1,12 +1,12 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
-from django.conf import settings
 
 from .models import Notification
 from .tasks import send_notification_email
 
 User = get_user_model()
+
 
 @receiver(post_save, sender='events.Event')
 def create_event_notification(sender, instance, created, **kwargs):

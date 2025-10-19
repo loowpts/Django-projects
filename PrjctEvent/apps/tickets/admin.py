@@ -1,9 +1,11 @@
 from django.contrib import admin
 from .models import Ticket, Registration
 
+
 class TicketInline(admin.TabularInline):
     model = Ticket
     extra = 1
+
 
 @admin.register(Registration)
 class RegistrationAdmin(admin.ModelAdmin):
@@ -16,6 +18,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         for reg in queryset:
             reg.cancel()
         self.message_user(request, "Регистрации отменены.")
+
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):

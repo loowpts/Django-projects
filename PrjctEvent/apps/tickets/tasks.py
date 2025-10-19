@@ -5,6 +5,7 @@ from io import BytesIO
 from .models import Registration
 from django.conf import settings
 
+
 @shared_task
 def send_ticket_email(registration_id):
     registration = Registration.objects.get(id=registration_id)

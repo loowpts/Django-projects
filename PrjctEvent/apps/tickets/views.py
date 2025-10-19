@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.template.response import TemplateResponse
 from django.http import HttpResponse
-from .models import Ticket, Registration
+from .models import Registration
 from .forms import RegistrationForm
 from apps.events.models import Event
 from apps.notifications.tasks import send_notification_email
@@ -22,6 +22,7 @@ from .tasks import send_ticket_email
 logger = logging.getLogger(__name__)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
 
 class PurchaseView(LoginRequiredMixin, View):
     template_name = 'tickets/ticket_purchase.html'
