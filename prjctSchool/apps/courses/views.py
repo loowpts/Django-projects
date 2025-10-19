@@ -1,6 +1,6 @@
 from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, UpdateView, CreateView, DeleteView
-from .models import Course, Category, Lesson
+from .models import Course, Lesson
 from .forms import CourseForm, CourseSearchForm, LessonForm
 from apps.enrollments.forms import EnrollmentForm
 from apps.enrollments.models import Enrollment
@@ -12,11 +12,6 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 
-# class RequestFormMixin:
-#     def get_form_kwargs(self):
-#         kwargs = super().get_form_kwargs()
-#         kwargs['request'] = self.request
-#         return kwargs
 
 class CourseListView(ListView):
     model = Course

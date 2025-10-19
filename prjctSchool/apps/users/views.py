@@ -9,7 +9,6 @@ from django.views.generic import FormView, DetailView
 from .models import UserProfile
 from .forms import RegisterForm, UserProfileForm, LoginForm
 from django.core.exceptions import PermissionDenied
-from .models import User
 
 
 class CustomLoginView(LoginView):

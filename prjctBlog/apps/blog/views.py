@@ -1,8 +1,8 @@
 from django.db.models.query import QuerySet
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, DetailView, UpdateView, CreateView, FormView, DeleteView
+from django.views.generic import ListView, DetailView, UpdateView, CreateView, DeleteView
 from .models import Category, Post, Comment, Like, Subscription
-from .forms import PostForm, CategoryForm, CommentForm, LikeForm
+from .forms import PostForm, CommentForm
 from django.db.models import Q, F
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views import View

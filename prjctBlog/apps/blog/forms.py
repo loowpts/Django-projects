@@ -2,7 +2,7 @@ from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-from .models import Post, Comment, Category, Like, Subscription
+from .models import Post, Comment, Category, Like
 
 
 class CategoryForm(forms.ModelForm):
