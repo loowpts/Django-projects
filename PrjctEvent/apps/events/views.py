@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from .forms import EventForm, ReviewForm, EventSearchForm
 from .models import Event, Review, Category
-
+from apps.chat.models import ChatMessage
 
 def htmx_redirect(request, url):
     if request.headers.get('HX-Request'):
@@ -86,20 +86,24 @@ class EventDetail(HTMXMixin, DetailView):
     model = Event
     slug_field = 'slug'
     slug_url_kwarg = 'slug'
+    context_object_name = 'event'
     partial_template = 'events/partials/event_detail.html'
     full_template = 'events/event_detail.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        event = self.get_object()
+        event = self.object
+
+        ctx['chat_messages'] = ChatMessage.objects.filter(
+            event=event
+        ).select_related('user').order_by('timestamp')[:20]
+
+        ctx['event_slug'] = event.slug
+
         ctx['reviews'] = event.reviews.filter(approved=True)
         ctx['tickets'] = event.tickets.all() if hasattr(event, 'tickets') else []
-        return ctx
 
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        context = self.get_context_data(object=self.object)
-        return self.render_response(context)
+        return ctx
 
 
 class EventCreate(LoginRequiredMixin, HTMXMixin, TemplateView):

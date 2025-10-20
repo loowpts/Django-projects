@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     'apps.events.apps.EventsConfig',
     'apps.tickets.apps.TicketsConfig',
     'apps.notifications.apps.NotificationsConfig',
-    # 'apps.chat.apps.ChatConfig',
+    'apps.chat.apps.ChatConfig',
     # 'apps.analytics.apps.AnalyticsConfig',
 
     # Библиотеки
@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.github',
-    # 'channels',
+    'channels',
 ]
 
 INSTALLED_APPS += ['django_celery_beat']
@@ -85,7 +85,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-# ASGI_APPLICATION = 'config.asgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
 
 DATABASES = {
     'default': {
@@ -263,5 +263,14 @@ SOCIALACCOUNT_PROVIDERS = {
             'repo',
             'read:org',
         ],
+    },
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
     },
 }
