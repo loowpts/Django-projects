@@ -129,6 +129,7 @@ TIME_ZONE = os.getenv('TIME_ZONE', 'UTC')
 USE_I18N = True
 USE_TZ = True
 
+
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -148,6 +149,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 #     },
 # }
 
+
 # Celery
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
@@ -162,6 +164,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
 
 SITE_ID = 1
 # Allauth account settings
@@ -181,6 +184,7 @@ SOCIALACCOUNT_LOGIN_ON_GET = True  # Автологин без доп. подт�
 
 LOGIN_REDIRECT_URL = '/users/me/'
 LOGOUT_REDIRECT_URL = '/'
+
 
 # Django REST Framework
 # REST_FRAMEWORK = {
@@ -237,6 +241,7 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 # STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 
+
 # Настройки провайдеров Google и GitHub
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -265,6 +270,7 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
     },
 }
+
 
 CHANNEL_LAYERS = {
     'default': {
