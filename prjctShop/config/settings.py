@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     'apps.users.apps.UsersConfig',
     # 'apps.orders.apps.OrdersConfig',
     # 'apps.payments.apps.PaymentsConfig',
-    # 'apps.products.apps.ProductsConfig',
+    'apps.products.apps.ProductsConfig',
     # 'apps.reviews.apps.ReviewsConfig',
 
     # Библиотеки
@@ -137,9 +137,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-# STATIC_ROOT = BASE_DIR / 'staticfiles'
-# MEDIA_URL = '/media/'
-# MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Whitenoise
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
