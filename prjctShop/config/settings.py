@@ -18,8 +18,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    
 
-    # 'apps.users.apps.UsersConfig',
+    'apps.users.apps.UsersConfig',
     # 'apps.orders.apps.OrdersConfig',
     # 'apps.payments.apps.PaymentsConfig',
     # 'apps.products.apps.ProductsConfig',
@@ -28,9 +30,16 @@ INSTALLED_APPS = [
     # Библиотеки
     'django_htmx',
     'taggit',
-    'rest_framework',
-    'corsheaders',
+    # 'rest_framework',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
+    'channels',
 ]
+
+INSTALLED_APPS += ['django_celery_beat']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -41,6 +50,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT') == 'True'
@@ -54,7 +65,7 @@ CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE') == 'True'
 X_FRAME_OPTIONS = os.getenv('X_FRAME_OPTIONS', 'DENY')
 
 ROOT_URLCONF = 'config.urls'
-# AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'users.User'
 
 # Настройки аутентификации
 AUTHENTICATION_BACKENDS = [
