@@ -355,7 +355,7 @@ class SubscriptionView(LoginRequiredMixin, View):
 
 class SubscriptionDeleteView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        category_slug = kwargs.get('categoru_slug')
+        category_slug = kwargs.get('category_slug')
         category = get_object_or_404(Category, slug=category_slug)
         subscription = get_object_or_404(Subscription, user=request.user, category=category)
         subscription.delete()
