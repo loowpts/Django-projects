@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     
 
     'apps.users.apps.UsersConfig',
+    'apps.main.apps.MainConfig',
     # 'apps.orders.apps.OrdersConfig',
     # 'apps.payments.apps.PaymentsConfig',
     'apps.products.apps.ProductsConfig',
@@ -31,12 +32,12 @@ INSTALLED_APPS = [
     'django_htmx',
     'taggit',
     # 'rest_framework',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.github',
-    'channels',
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
+    # 'allauth.socialaccount.providers.google',
+    # 'allauth.socialaccount.providers.github',
+    # 'channels',
 ]
 
 INSTALLED_APPS += ['django_celery_beat']
@@ -51,7 +52,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
+    # 'allauth.account.middleware.AccountMiddleware',
 ]
 
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT') == 'True'
