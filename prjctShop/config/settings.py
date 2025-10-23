@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     # 'apps.orders.apps.OrdersConfig',
     # 'apps.payments.apps.PaymentsConfig',
     'apps.products.apps.ProductsConfig',
-    # 'apps.reviews.apps.ReviewsConfig',
+    'apps.reviews.apps.ReviewsConfig',
 
     # Библиотеки
     'django_htmx',
