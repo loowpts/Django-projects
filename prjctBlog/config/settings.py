@@ -79,24 +79,17 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 # ASGI_APPLICATION = 'config.asgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 # Для PostgreSQL
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('DB_NAME'),
-#         'USER': os.getenv('DB_USER'),
-#         'PASSWORD': os.getenv('DB_PASSWORD'),
-#         'HOST': os.getenv('DB_HOST'),
-#         'PORT': os.getenv('DB_PORT'),
-#     }
-# }
+DATABASES = {
+     'default': {
+         'ENGINE': 'django.db.backends.postgresql',
+         'NAME': os.getenv('DB_NAME'),
+         'USER': os.getenv('DB_USER'),
+         'PASSWORD': os.getenv('DB_PASSWORD'),
+         'HOST': os.getenv('DB_HOST'),
+         'PORT': os.getenv('DB_PORT'),
+     }
+ }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -121,6 +114,7 @@ TIME_ZONE = os.getenv('TIME_ZONE', 'UTC')
 USE_I18N = True
 USE_TZ = True
 
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 # STATIC_ROOT = BASE_DIR / 'staticfiles'

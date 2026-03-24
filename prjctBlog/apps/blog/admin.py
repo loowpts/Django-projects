@@ -22,7 +22,6 @@ class PostAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('title',)}
     date_hierarchy = 'published_at'
     readonly_fields = ['views_count', 'created_at', 'updated_at', 'cover_preview']
-    filter_horizontal = ['tags']
     
     fieldsets = (
         ('Основная информация', {
