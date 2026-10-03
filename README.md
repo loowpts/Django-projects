@@ -15,7 +15,7 @@
 | [prjctBlog](prjctBlog) | блог, есть Docker | `blog`, `users` |
 | [PrjctEvent](PrjctEvent) | мероприятия и билеты | `events`, `tickets`, `chat`, `notifications`, `analytics`, `users` |
 | [prjctSchool](prjctSchool) | онлайн-школа | `courses`, `enrollments`, `comments`, `dashboard`, `api`, `core`, `users` |
-| [prjctShop](prjctShop) | интернет-магазин, есть Dockerfile | `products`, `cart`, `orders`, `payments`, `reviews`, `main`, `users` |
+| [prjctShop](prjctShop) | интернет-магазин, есть Dockerfile, нужен PostgreSQL | `products`, `cart`, `orders`, `payments`, `reviews`, `main`, `users` |
 | [prjctTodo](prjctTodo) | список задач | `todo`, `users` |
 
 ## Запуск проекта
@@ -25,6 +25,7 @@ git clone https://github.com/loowpts/Django-projects.git
 cd Django-projects/<проект>
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env   # при необходимости поправить значения
 python manage.py migrate
 python manage.py runserver
 ```
